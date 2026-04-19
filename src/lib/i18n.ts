@@ -39,7 +39,12 @@ export type I18nKey =
   | "density"
   | "compact"
   | "comfortable"
-  | "dragHint";
+  | "dragHint"
+  | "edit"
+  | "delete"
+  | "save"
+  | "cancel"
+  | "dragToDate";
 
 export const weekdayEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export const weekdayZh = ["日", "一", "二", "三", "四", "五", "六"];
@@ -86,6 +91,11 @@ export const i18n: Record<Lang, Record<I18nKey, string>> = {
     compact: "Compact",
     comfortable: "Comfort",
     dragHint: "Drag onto a date",
+    edit: "Edit",
+    delete: "Delete",
+    save: "Save",
+    cancel: "Cancel",
+    dragToDate: "Hold and drag to a date",
   },
   zh: {
     appTitle: "待办 + 日历",
@@ -127,6 +137,11 @@ export const i18n: Record<Lang, Record<I18nKey, string>> = {
     compact: "紧凑",
     comfortable: "舒适",
     dragHint: "拖到日期上",
+    edit: "编辑",
+    delete: "删除",
+    save: "保存",
+    cancel: "取消",
+    dragToDate: "按住并拖到日期上",
   },
 };
 

@@ -47,6 +47,9 @@ type CalendarSectionProps = {
   onPickMonth: (monthIndex: number) => void;
   onSelectDay: (d: Date) => void;
   onChangeMonthByDay: (d: Date) => void;
+  onHoverDay: (key: string) => void;
+  onLeaveHoverDay: (key: string) => void;
+  onReleaseDay: (d: Date, isFuture: boolean) => void;
   onDragOverDay: (key: string) => void;
   onDragLeaveDay: (key: string) => void;
   onDropDay: (d: Date) => void;
@@ -82,6 +85,9 @@ export function CalendarSection({
   onPickMonth,
   onSelectDay,
   onChangeMonthByDay,
+  onHoverDay,
+  onLeaveHoverDay,
+  onReleaseDay,
   onDragOverDay,
   onDragLeaveDay,
   onDropDay,
@@ -147,6 +153,19 @@ export function CalendarSection({
               onClick={() => {
                 onSelectDay(d);
                 if (isAfterDay(d, monthEnd)) onChangeMonthByDay(d);
+              }}
+              onMouseEnter={() => {
+                if (!dragTodoId) return;
+                if (isFuture) return;
+                onHoverDay(key);
+              }}
+              onMouseLeave={() => {
+                if (!dragTodoId) return;
+                onLeaveHoverDay(key);
+              }}
+              onMouseUp={() => {
+                if (!dragTodoId) return;
+                onReleaseDay(d, isFuture);
               }}
               onDragOver={(e) => {
                 if (!dragTodoId) return;

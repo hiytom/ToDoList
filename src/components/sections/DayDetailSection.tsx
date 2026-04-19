@@ -1,6 +1,7 @@
 import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { SecondaryButton } from "../ui";
+import { Check, Pencil, Trash2, X } from "lucide-react";
+import { IconButton, SecondaryButton } from "../ui";
 
 type DoneItem = {
   id: string;
@@ -19,7 +20,18 @@ type DayDetailSectionProps = {
     nothingDone: string;
     futureSelf: string;
     markUndone: string;
+    edit: string;
+    delete: string;
+    save: string;
+    cancel: string;
   };
+  editingTodoId: string | null;
+  editingTitle: string;
+  onEditingTitleChange: (value: string) => void;
+  onStartEditing: (todo: Pick<DoneItem, "id" | "title">) => void;
+  onSaveEditing: () => void;
+  onCancelEditing: () => void;
+  onDeleteTodo: (todoId: string) => void;
   onToggleDayPanel: () => void;
   onMarkUndone: (todoId: string) => void;
 };
@@ -29,6 +41,13 @@ export function DayDetailSection({
   showDayPanel,
   selectedDone,
   labels,
+  editingTodoId,
+  editingTitle,
+  onEditingTitleChange,
+  onStartEditing,
+  onSaveEditing,
+  onCancelEditing,
+  onDeleteTodo,
   onToggleDayPanel,
   onMarkUndone,
 }: DayDetailSectionProps) {
@@ -72,12 +91,47 @@ export function DayDetailSection({
                     style={{ borderColor: "var(--border)" }}
                   >
                     <div id={`done-item-main-${todo.id}`} data-role="day-item-main" className="min-w-0">
-                      <p id={`done-item-title-${todo.id}`} className="truncate text-sm">{todo.title}</p>
-                      <p id={`done-item-time-${todo.id}`} className="text-xs text-[var(--muted)]">
-                        {new Date(todo.doneAt ?? 0).toLocaleString()}
-                      </p>
+                      {editingTodoId === todo.id ? (
+                        <div className="flex min-w-0 flex-col gap-2">
+                          <input
+                            id={`done-item-edit-${todo.id}`}
+                            value={editingTitle}
+                            onChange={(e) => onEditingTitleChange(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") onSaveEditing();
+                              if (e.key === "Escape") onCancelEditing();
+                            }}
+                            className="w-full rounded-lg border bg-[var(--card)] px-2 py-1 text-sm outline-none"
+                            style={{ borderColor: "var(--border2)" }}
+                            autoFocus
+                          />
+                          <div className="flex items-center gap-1">
+                            <IconButton id={`btn-save-done-${todo.id}`} title={labels.save} onClick={onSaveEditing}>
+                              <Check size={15} />
+                            </IconButton>
+                            <IconButton id={`btn-cancel-done-${todo.id}`} title={labels.cancel} onClick={onCancelEditing}>
+                              <X size={15} />
+                            </IconButton>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p id={`done-item-title-${todo.id}`} className="truncate text-sm">{todo.title}</p>
+                          <p id={`done-item-time-${todo.id}`} className="text-xs text-[var(--muted)]">
+                            {new Date(todo.doneAt ?? 0).toLocaleString()}
+                          </p>
+                        </>
+                      )}
                     </div>
-                    <SecondaryButton id={`btn-mark-undone-${todo.id}`} onClick={() => onMarkUndone(todo.id)}>{labels.markUndone}</SecondaryButton>
+                    <div className="ml-3 flex shrink-0 items-center gap-1">
+                      <IconButton id={`btn-edit-done-${todo.id}`} title={labels.edit} onClick={() => onStartEditing(todo)}>
+                        <Pencil size={15} />
+                      </IconButton>
+                      <IconButton id={`btn-delete-done-${todo.id}`} title={labels.delete} onClick={() => onDeleteTodo(todo.id)}>
+                        <Trash2 size={15} />
+                      </IconButton>
+                      <SecondaryButton id={`btn-mark-undone-${todo.id}`} onClick={() => onMarkUndone(todo.id)}>{labels.markUndone}</SecondaryButton>
+                    </div>
                   </div>
                 ))}
               </div>

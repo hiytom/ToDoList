@@ -1,6 +1,7 @@
-import { useMemo, useState, type RefObject } from "react";
+import { useEffect, useMemo, useState, type RefObject } from "react";
 import type { AnimationControls } from "framer-motion";
 import { doneAtForDate, ymd } from "../lib/date";
+import { loadPersistedTodos, persistTodos } from "../lib/storage";
 import type { Todo, UndoAction } from "../types/todo";
 
 type UseTodoDataArgs = {
@@ -8,25 +9,33 @@ type UseTodoDataArgs = {
   monthCursor: Date;
   selectedDay: Date;
   controls: AnimationControls;
-  listRef: RefObject<HTMLDivElement | null>;
+  listRef: RefObject<HTMLDivElement>;
 };
 
 export function useTodoData({ today, monthCursor, selectedDay, controls, listRef }: UseTodoDataArgs) {
   const [title, setTitle] = useState("");
   const [undoAction, setUndoAction] = useState<UndoAction | null>(null);
-  const [todos, setTodos] = useState<Todo[]>(() => {
-    const now = Date.now();
-    return [
-      { id: "t1", title: "Send supplier revision list", createdAt: now - 1000 * 60 * 45 },
-      { id: "t2", title: "Collect UGC clips for campaign", createdAt: now - 1000 * 60 * 80 },
-      {
-        id: "t3",
-        title: "Finalize product card copy",
-        createdAt: now - 1000 * 60 * 180,
-        doneAt: doneAtForDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)),
-      },
-    ];
-  });
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [hasLoadedTodos, setHasLoadedTodos] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void loadPersistedTodos(today).then((loadedTodos) => {
+      if (cancelled) return;
+      setTodos(loadedTodos);
+      setHasLoadedTodos(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [today]);
+
+  useEffect(() => {
+    if (!hasLoadedTodos) return;
+    void persistTodos(todos);
+  }, [hasLoadedTodos, todos]);
 
   const pending = useMemo(
     () => todos.filter((x) => !x.doneAt).sort((a, b) => b.createdAt - a.createdAt),
@@ -85,6 +94,18 @@ export function useTodoData({ today, monthCursor, selectedDay, controls, listRef
     setTodos((old) => old.map((x) => (x.id === todoId ? { ...x, doneAt: undefined } : x)));
   }
 
+  function updateTodoTitle(todoId: string, nextTitle: string) {
+    const trimmed = nextTitle.trim();
+    if (!trimmed) return false;
+    setTodos((old) => old.map((x) => (x.id === todoId ? { ...x, title: trimmed } : x)));
+    return true;
+  }
+
+  function deleteTodo(todoId: string) {
+    setTodos((old) => old.filter((x) => x.id !== todoId));
+    setUndoAction((old) => (old?.todoId === todoId ? null : old));
+  }
+
   function undoLast() {
     if (!undoAction) return;
     setTodos((old) => old.map((x) => (x.id === undoAction.todoId ? { ...x, doneAt: undoAction.prevDoneAt } : x)));
@@ -108,6 +129,8 @@ export function useTodoData({ today, monthCursor, selectedDay, controls, listRef
     createTodo,
     updateDone,
     markUndone,
+    updateTodoTitle,
+    deleteTodo,
     undoLast,
     demoCompleteFirst,
   };

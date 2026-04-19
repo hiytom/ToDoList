@@ -43,6 +43,11 @@ export function runSelfTests() {
     "compact",
     "comfortable",
     "dragHint",
+    "edit",
+    "delete",
+    "save",
+    "cancel",
+    "dragToDate",
   ];
 
   for (const lg of ["en", "zh"] as const) {

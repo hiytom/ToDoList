@@ -9,3 +9,5 @@ export type UndoAction = {
   todoId: string;
   prevDoneAt?: number;
 };
+
+export type EditableTodo = Todo;

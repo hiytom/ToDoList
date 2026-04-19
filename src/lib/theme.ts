@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 
+type ThemeCssVars = CSSProperties & Record<`--${string}`, string>;
+
 export type ThemeName =
   | "mint"
   | "indigo"
@@ -109,7 +111,7 @@ export const themes: Record<ThemeName, ThemeTokens> = {
   },
 };
 
-export function themeVars(theme: ThemeName, dark: boolean, compact: boolean): CSSProperties {
+export function themeVars(theme: ThemeName, dark: boolean, compact: boolean): ThemeCssVars {
   const tk = themes[theme];
 
   const light = {
@@ -168,5 +170,5 @@ export function themeVars(theme: ThemeName, dark: boolean, compact: boolean): CS
     "--accentSoft": tk.accentSoft,
     "--accentSoftHover": tk.accentSoftHover,
     "--accentRing": tk.accentRing,
-  } as CSSProperties;
+  };
 }

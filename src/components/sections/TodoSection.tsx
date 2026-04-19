@@ -1,7 +1,7 @@
 import React from "react";
 import { AnimatePresence, motion, type AnimationControls } from "framer-motion";
-import { Circle, Plus, Undo2 } from "lucide-react";
-import { Chip, PrimaryButton, SecondaryButton, cls } from "../ui";
+import { Check, Circle, GripVertical, Pencil, Plus, Trash2, Undo2, X } from "lucide-react";
+import { Chip, IconButton, PrimaryButton, SecondaryButton, cls } from "../ui";
 
 type TodoItem = {
   id: string;
@@ -15,8 +15,9 @@ type TodoSectionProps = {
   pending: TodoItem[];
   monthDoneCount: number;
   undoEnabled: boolean;
+  showDemoAction: boolean;
   title: string;
-  listRef: React.RefObject<HTMLDivElement | null>;
+  listRef: React.RefObject<HTMLDivElement>;
   ghostHeight: number;
   labels: {
     pending: string;
@@ -28,13 +29,24 @@ type TodoSectionProps = {
     noPending: string;
     created: string;
     dragHint: string;
+    edit: string;
+    delete: string;
+    save: string;
+    cancel: string;
+    dragToDate: string;
   };
   onTitleChange: (value: string) => void;
   onCreateTodo: () => void;
   onUndoLast: () => void;
   onDemoCompleteFirst: () => void;
-  onPendingDragStart: (e: React.DragEvent<HTMLDivElement>, todoId: string) => void;
-  onPendingDragEnd: () => void;
+  editingTodoId: string | null;
+  editingTitle: string;
+  onEditingTitleChange: (value: string) => void;
+  onStartEditing: (todo: TodoItem) => void;
+  onSaveEditing: () => void;
+  onCancelEditing: () => void;
+  onDeleteTodo: (todoId: string) => void;
+  onPendingPointerStart: (todoId: string) => void;
   onPendingClick: (todoId: string) => void;
 };
 
@@ -43,6 +55,7 @@ export function TodoSection({
   pending,
   monthDoneCount,
   undoEnabled,
+  showDemoAction,
   title,
   listRef,
   ghostHeight,
@@ -51,8 +64,14 @@ export function TodoSection({
   onCreateTodo,
   onUndoLast,
   onDemoCompleteFirst,
-  onPendingDragStart,
-  onPendingDragEnd,
+  editingTodoId,
+  editingTitle,
+  onEditingTitleChange,
+  onStartEditing,
+  onSaveEditing,
+  onCancelEditing,
+  onDeleteTodo,
+  onPendingPointerStart,
   onPendingClick,
 }: TodoSectionProps) {
   return (
@@ -77,7 +96,9 @@ export function TodoSection({
           >
             <Undo2 size={16} /> {labels.undo}
           </SecondaryButton>
-          <SecondaryButton id="btn-demo-complete" onClick={onDemoCompleteFirst}>{labels.demo}</SecondaryButton>
+          {showDemoAction && (
+            <SecondaryButton id="btn-demo-complete" onClick={onDemoCompleteFirst}>{labels.demo}</SecondaryButton>
+          )}
         </div>
       </div>
 
@@ -130,26 +151,108 @@ export function TodoSection({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98 }}
-                draggable
-                onDragStart={(e) => onPendingDragStart(e, todo.id)}
-                onDragEnd={onPendingDragEnd}
                 className={cls(
                   "mb-2 flex cursor-pointer items-center justify-between rounded-xl border px-3",
                   "bg-[var(--card)] hover:bg-[var(--accentSoft)] transition-colors"
                 )}
                 style={{ borderColor: "var(--border)", minHeight: `${ghostHeight}px` }}
-                onClick={() => onPendingClick(todo.id)}
+                onClick={() => {
+                  if (editingTodoId === todo.id) return;
+                  onPendingClick(todo.id);
+                }}
               >
                 <div id={`pending-item-main-${todo.id}`} data-role="pending-item-main" className="flex min-w-0 items-center gap-2 py-2">
                   <Circle size={16} className="shrink-0 text-[var(--muted)]" />
                   <div id={`pending-item-text-${todo.id}`} data-role="pending-item-text" className="min-w-0">
-                    <p id={`pending-item-title-${todo.id}`} className="truncate text-sm">{todo.title}</p>
-                    <p id={`pending-item-created-${todo.id}`} className="text-xs text-[var(--muted)]">
-                      {labels.created}: {new Date(todo.createdAt).toLocaleString()}
-                    </p>
+                    {editingTodoId === todo.id ? (
+                      <div className="flex min-w-0 flex-col gap-2">
+                        <input
+                          id={`pending-item-edit-${todo.id}`}
+                          value={editingTitle}
+                          onChange={(e) => onEditingTitleChange(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") onSaveEditing();
+                            if (e.key === "Escape") onCancelEditing();
+                          }}
+                          className="w-full rounded-lg border bg-[var(--card2)] px-2 py-1 text-sm outline-none"
+                          style={{ borderColor: "var(--border2)" }}
+                          autoFocus
+                        />
+                        <div className="flex items-center gap-1">
+                          <IconButton
+                            id={`btn-save-edit-${todo.id}`}
+                            title={labels.save}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSaveEditing();
+                            }}
+                          >
+                            <Check size={15} />
+                          </IconButton>
+                          <IconButton
+                            id={`btn-cancel-edit-${todo.id}`}
+                            title={labels.cancel}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCancelEditing();
+                            }}
+                          >
+                            <X size={15} />
+                          </IconButton>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p id={`pending-item-title-${todo.id}`} className="truncate text-sm">{todo.title}</p>
+                        <p id={`pending-item-created-${todo.id}`} className="text-xs text-[var(--muted)]">
+                          {labels.created}: {new Date(todo.createdAt).toLocaleString()}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
-                <Chip id={`pending-item-chip-${todo.id}`} dataRole="pending-item-chip">{labels.dragHint}</Chip>
+                <div className="ml-3 flex shrink-0 items-center gap-1">
+                  <IconButton
+                    id={`btn-edit-pending-${todo.id}`}
+                    title={labels.edit}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStartEditing(todo);
+                    }}
+                  >
+                    <Pencil size={15} />
+                  </IconButton>
+                  <IconButton
+                    id={`btn-delete-pending-${todo.id}`}
+                    title={labels.delete}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteTodo(todo.id);
+                    }}
+                  >
+                    <Trash2 size={15} />
+                  </IconButton>
+                  <button
+                    id={`pending-item-chip-${todo.id}`}
+                    data-role="pending-item-chip"
+                    type="button"
+                    title={labels.dragToDate}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onPendingPointerStart(todo.id);
+                    }}
+                    className="cursor-grab active:cursor-grabbing"
+                  >
+                    <Chip dataRole="pending-item-chip">
+                      <span className="inline-flex items-center gap-1">
+                        <GripVertical size={13} />
+                        {labels.dragHint}
+                      </span>
+                    </Chip>
+                  </button>
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>
