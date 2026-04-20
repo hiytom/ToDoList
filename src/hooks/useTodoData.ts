@@ -69,15 +69,17 @@ export function useTodoData({ today, monthCursor, selectedDay, controls, listRef
     [doneMap, selectedDay]
   );
 
-  function createTodo() {
+  async function createTodo() {
     const v = title.trim();
-    if (!v) return;
+    if (!v) return false;
     const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}`;
     setTodos((prev) => [{ id, title: v, createdAt: Date.now() }, ...prev]);
     setTitle("");
+    await controls.start({ scale: [1, 1.012, 1], y: [0, -2, 0], transition: { duration: 0.22 } });
     requestAnimationFrame(() => {
       listRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     });
+    return true;
   }
 
   function updateDone(todoId: string, date: Date) {

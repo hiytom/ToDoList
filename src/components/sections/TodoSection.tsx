@@ -1,6 +1,6 @@
 import React from "react";
 import { AnimatePresence, motion, type AnimationControls } from "framer-motion";
-import { Check, Circle, Pencil, Plus, Trash2, Undo2, X } from "lucide-react";
+import { Check, Circle, Pencil, Plus, Trash2, X } from "lucide-react";
 import { IconButton, PrimaryButton, SecondaryButton, cls } from "../ui";
 
 type TodoItem = {
@@ -14,15 +14,14 @@ type TodoSectionProps = {
   controls: AnimationControls;
   pending: TodoItem[];
   monthDoneCount: number;
-  undoEnabled: boolean;
   showDemoAction: boolean;
+  addFeedbackToken: number;
   title: string;
   listRef: React.RefObject<HTMLDivElement>;
   ghostHeight: number;
   labels: {
     pending: string;
     doneMonth: string;
-    undo: string;
     demo: string;
     placeholder: string;
     add: string;
@@ -32,11 +31,11 @@ type TodoSectionProps = {
     delete: string;
     save: string;
     cancel: string;
+    addedSuccess: string;
   };
   dragActiveTodoId: string | null;
   onTitleChange: (value: string) => void;
   onCreateTodo: () => void;
-  onUndoLast: () => void;
   onDemoCompleteFirst: () => void;
   editingTodoId: string | null;
   editingTitle: string;
@@ -53,8 +52,8 @@ export function TodoSection({
   controls,
   pending,
   monthDoneCount,
-  undoEnabled,
   showDemoAction,
+  addFeedbackToken,
   title,
   listRef,
   ghostHeight,
@@ -62,7 +61,6 @@ export function TodoSection({
   dragActiveTodoId,
   onTitleChange,
   onCreateTodo,
-  onUndoLast,
   onDemoCompleteFirst,
   editingTodoId,
   editingTitle,
@@ -92,14 +90,6 @@ export function TodoSection({
           </span>
         </div>
         <div id="todo-actions" data-role="container-group" className="flex items-center gap-2">
-          <SecondaryButton
-            id="btn-undo"
-            className="inline-flex items-center gap-1 whitespace-nowrap"
-            disabled={!undoEnabled}
-            onClick={onUndoLast}
-          >
-            <Undo2 size={16} /> {labels.undo}
-          </SecondaryButton>
           {showDemoAction && (
             <SecondaryButton id="btn-demo-complete" onClick={onDemoCompleteFirst}>{labels.demo}</SecondaryButton>
           )}
@@ -117,7 +107,21 @@ export function TodoSection({
             onChange={(e) => onTitleChange(e.target.value)}
             placeholder={labels.placeholder}
           />
-          <div id="todo-input-actions" data-role="container-actions" className="mt-3 flex justify-end">
+          <div id="todo-input-actions" data-role="container-actions" className="mt-3 flex items-center justify-end gap-2">
+            <AnimatePresence mode="wait">
+              {addFeedbackToken > 0 && (
+                <motion.div
+                  key={addFeedbackToken}
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                  transition={{ duration: 0.24 }}
+                  className="rounded-full bg-[var(--accentSoft)] px-2.5 py-1 text-xs text-[var(--fg)]"
+                >
+                  {labels.addedSuccess}
+                </motion.div>
+              )}
+            </AnimatePresence>
             <PrimaryButton id="btn-add-todo" onClick={onCreateTodo}>
               <Plus size={16} />
               {labels.add}
@@ -156,8 +160,8 @@ export function TodoSection({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98 }}
                 className={cls(
-                  "mb-2 flex cursor-grab items-center justify-between rounded-xl border px-3 transition-all",
-                  "bg-[var(--card)] hover:bg-[var(--accentSoft)] active:cursor-grabbing",
+                  "mb-2 flex cursor-default items-center justify-between rounded-xl border px-3 transition-all",
+                  "bg-[var(--card)] hover:bg-[var(--accentSoft)]",
                   dragActiveTodoId === todo.id && "scale-[0.985] opacity-40"
                 )}
                 style={{ borderColor: "var(--border)", minHeight: `${ghostHeight}px` }}

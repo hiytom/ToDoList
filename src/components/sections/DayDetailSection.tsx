@@ -90,7 +90,7 @@ export function DayDetailSection({
                     className="flex items-center justify-between rounded-xl border bg-[var(--card2)] px-3 py-2"
                     style={{ borderColor: "var(--border)" }}
                   >
-                    <div id={`done-item-main-${todo.id}`} data-role="day-item-main" className="min-w-0">
+                    <div id={`done-item-main-${todo.id}`} data-role="day-item-main" className="flex min-w-0 items-center">
                       {editingTodoId === todo.id ? (
                         <div className="flex min-w-0 flex-col gap-2">
                           <input
@@ -116,10 +116,15 @@ export function DayDetailSection({
                         </div>
                       ) : (
                         <>
-                          <p id={`done-item-title-${todo.id}`} className="truncate text-sm">{todo.title}</p>
-                          <p id={`done-item-time-${todo.id}`} className="text-xs text-[var(--muted)]">
-                            {new Date(todo.doneAt ?? 0).toLocaleString()}
-                          </p>
+                          <div className="group relative min-w-0">
+                            <p id={`done-item-title-${todo.id}`} className="truncate text-sm">{todo.title}</p>
+                            <div
+                              className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden max-w-[320px] rounded-lg border bg-[var(--card)] px-2 py-1 text-xs text-[var(--fg)] shadow-lg group-hover:block"
+                              style={{ borderColor: "var(--border)" }}
+                            >
+                              {todo.title}
+                            </div>
+                          </div>
                         </>
                       )}
                     </div>

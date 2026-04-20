@@ -48,6 +48,11 @@ export function runSelfTests() {
     "save",
     "cancel",
     "dragToDate",
+    "addedSuccess",
+    "yearView",
+    "completedCount",
+    "less",
+    "more",
   ];
 
   for (const lg of ["en", "zh"] as const) {

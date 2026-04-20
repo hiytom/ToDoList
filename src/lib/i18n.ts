@@ -44,7 +44,12 @@ export type I18nKey =
   | "delete"
   | "save"
   | "cancel"
-  | "dragToDate";
+  | "dragToDate"
+  | "addedSuccess"
+  | "yearView"
+  | "completedCount"
+  | "less"
+  | "more";
 
 export const weekdayEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export const weekdayZh = ["日", "一", "二", "三", "四", "五", "六"];
@@ -96,6 +101,11 @@ export const i18n: Record<Lang, Record<I18nKey, string>> = {
     save: "Save",
     cancel: "Cancel",
     dragToDate: "Hold and drag to a date",
+    addedSuccess: "Added",
+    yearView: "Year view",
+    completedCount: "completed",
+    less: "Less",
+    more: "More",
   },
   zh: {
     appTitle: "待办 + 日历",
@@ -142,6 +152,11 @@ export const i18n: Record<Lang, Record<I18nKey, string>> = {
     save: "保存",
     cancel: "取消",
     dragToDate: "按住并拖到日期上",
+    addedSuccess: "已添加",
+    yearView: "年度视图",
+    completedCount: "项完成",
+    less: "少",
+    more: "多",
   },
 };
 

@@ -10,6 +10,7 @@ import { cls, IconButton, SecondaryButton } from "./components/ui";
 import { CalendarSection } from "./components/sections/CalendarSection";
 import { DayDetailSection } from "./components/sections/DayDetailSection";
 import { TodoSection } from "./components/sections/TodoSection";
+import { YearHeatmapSection } from "./components/sections/YearHeatmapSection";
 import { addDays, clampToDay, isAfterDay, isSameDay, startOfMonth, ymd } from "./lib/date";
 import { t, type Lang, weekdayEn, weekdayZh } from "./lib/i18n";
 import { runSelfTests } from "./lib/selfTests";
@@ -30,6 +31,7 @@ export default function App() {
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [pickerYear, setPickerYear] = useState(today.getFullYear());
+  const [heatmapYear, setHeatmapYear] = useState(today.getFullYear());
   const [showDayPanel, setShowDayPanel] = useState(true);
   const [monthCursor, setMonthCursor] = useState(startOfMonth(today));
   const [selectedDay, setSelectedDay] = useState(today);
@@ -40,6 +42,8 @@ export default function App() {
   const [editingTitle, setEditingTitle] = useState("");
   const [showDemoAction, setShowDemoAction] = useState(true);
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false);
+  const [addFeedbackToken, setAddFeedbackToken] = useState(0);
+  const addFeedbackTimerRef = useRef<number | null>(null);
   const dragStartRef = useRef<{ id: string; title: string; startX: number; startY: number } | null>(null);
   const suppressClickRef = useRef<string | null>(null);
   const controls = useAnimationControls();
@@ -60,6 +64,7 @@ export default function App() {
       setCompact(settings.compact);
       setShowDayPanel(settings.showDayPanel);
       setShowDemoAction(!settings.demoDismissed);
+      setHeatmapYear(today.getFullYear());
       setHasLoadedSettings(true);
     });
 
@@ -143,7 +148,6 @@ export default function App() {
   const {
     title,
     setTitle,
-    undoAction,
     pending,
     doneMap,
     monthDoneCount,
@@ -153,7 +157,6 @@ export default function App() {
     markUndone,
     updateTodoTitle,
     deleteTodo,
-    undoLast,
     demoCompleteFirst,
   } = useTodoData({ today, monthCursor, selectedDay, controls, listRef });
 
@@ -217,7 +220,7 @@ export default function App() {
       <div
         id="layout-page"
         data-role="container-layout"
-        className="mx-auto flex h-full max-w-6xl flex-col px-[var(--pagePX)] py-[var(--pagePY)]"
+        className="mx-auto flex h-full max-w-6xl flex-col overflow-y-auto px-[var(--pagePX)] py-[var(--pagePY)]"
         style={{ gap: "var(--gap)" }}
       >
         <header
@@ -271,7 +274,6 @@ export default function App() {
           controls={controls}
           pending={pending}
           monthDoneCount={monthDoneCount}
-          undoEnabled={!!undoAction}
           showDemoAction={showDemoAction}
           title={title}
           listRef={listRef}
@@ -279,7 +281,6 @@ export default function App() {
           labels={{
             pending: t(lang, "pending"),
             doneMonth: t(lang, "doneMonth"),
-            undo: t(lang, "undo"),
             demo: t(lang, "demo"),
             placeholder: t(lang, "placeholder"),
             add: t(lang, "add"),
@@ -289,11 +290,25 @@ export default function App() {
             delete: t(lang, "delete"),
             save: t(lang, "save"),
             cancel: t(lang, "cancel"),
+            addedSuccess: t(lang, "addedSuccess"),
           }}
           dragActiveTodoId={dragTodoId}
           onTitleChange={setTitle}
-          onCreateTodo={createTodo}
-          onUndoLast={undoLast}
+          addFeedbackToken={addFeedbackToken}
+          onCreateTodo={async () => {
+            const created = await createTodo();
+            if (created) {
+              const token = Date.now();
+              setAddFeedbackToken(token);
+              if (addFeedbackTimerRef.current) {
+                window.clearTimeout(addFeedbackTimerRef.current);
+              }
+              addFeedbackTimerRef.current = window.setTimeout(() => {
+                setAddFeedbackToken(0);
+                addFeedbackTimerRef.current = null;
+              }, 1200);
+            }
+          }}
           onDemoCompleteFirst={async () => {
             await demoCompleteFirst();
             setShowDemoAction(false);
@@ -326,7 +341,7 @@ export default function App() {
         <div
           id="calendar-detail-layout"
           data-role="container-split-layout"
-          className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]"
+          className="grid min-h-[520px] flex-1 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]"
         >
           <CalendarSection
             lang={lang}
@@ -434,6 +449,23 @@ export default function App() {
             onMarkUndone={markUndone}
           />
         </div>
+
+        <YearHeatmapSection
+          lang={lang}
+          year={heatmapYear}
+          today={today}
+          doneMap={doneMap}
+          heatColor={themes[theme].accent}
+          onSelectDay={setSelectedDay}
+          onChangeMonthByDay={(date) => setMonthCursor(startOfMonth(date))}
+          onChangeYear={setHeatmapYear}
+          labels={{
+            yearView: t(lang, "yearView"),
+            completedCount: t(lang, "completedCount"),
+            less: t(lang, "less"),
+            more: t(lang, "more"),
+          }}
+        />
       </div>
       {dragGhost && (
         <div
