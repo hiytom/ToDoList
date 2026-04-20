@@ -19,6 +19,7 @@ import { useTodoData } from "./hooks/useTodoData";
 import type { AppSettings } from "./types/settings";
 
 const GHOST_HEIGHT = 48; // fixed macOS-style drag preview height
+const DRAG_THRESHOLD = 6;
 
 export default function App() {
   const today = useMemo(() => clampToDay(new Date()), []);
@@ -34,10 +35,13 @@ export default function App() {
   const [selectedDay, setSelectedDay] = useState(today);
   const [dragTodoId, setDragTodoId] = useState<string | null>(null);
   const [dragOverDay, setDragOverDay] = useState<string | null>(null);
+  const [dragGhost, setDragGhost] = useState<{ title: string; x: number; y: number } | null>(null);
   const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [showDemoAction, setShowDemoAction] = useState(true);
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false);
+  const dragStartRef = useRef<{ id: string; title: string; startX: number; startY: number } | null>(null);
+  const suppressClickRef = useRef<string | null>(null);
   const controls = useAnimationControls();
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -65,14 +69,46 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!dragTodoId) return;
-    const stopDragging = () => {
+    const handleMouseMove = (event: MouseEvent) => {
+      const dragStart = dragStartRef.current;
+      if (!dragStart) return;
+
+      const deltaX = event.clientX - dragStart.startX;
+      const deltaY = event.clientY - dragStart.startY;
+      const movedEnough = Math.hypot(deltaX, deltaY) >= DRAG_THRESHOLD;
+
+      if (!dragTodoId && movedEnough) {
+        setDragTodoId(dragStart.id);
+        setDragGhost({
+          title: dragStart.title,
+          x: event.clientX + 16,
+          y: event.clientY + 18,
+        });
+        suppressClickRef.current = dragStart.id;
+        return;
+      }
+
+      if (dragTodoId) {
+        setDragGhost({
+          title: dragStart.title,
+          x: event.clientX + 16,
+          y: event.clientY + 18,
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      dragStartRef.current = null;
       setDragTodoId(null);
       setDragOverDay(null);
+      setDragGhost(null);
     };
-    window.addEventListener("mouseup", stopDragging);
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
     return () => {
-      window.removeEventListener("mouseup", stopDragging);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [dragTodoId]);
 
@@ -161,8 +197,10 @@ export default function App() {
     deleteTodo(todoId);
     if (editingTodoId === todoId) cancelEditing();
     if (dragTodoId === todoId) {
+      dragStartRef.current = null;
       setDragTodoId(null);
       setDragOverDay(null);
+      setDragGhost(null);
     }
   }
 
@@ -247,13 +285,12 @@ export default function App() {
             add: t(lang, "add"),
             noPending: t(lang, "noPending"),
             created: t(lang, "created"),
-            dragHint: t(lang, "dragHint"),
             edit: t(lang, "edit"),
             delete: t(lang, "delete"),
             save: t(lang, "save"),
             cancel: t(lang, "cancel"),
-            dragToDate: t(lang, "dragToDate"),
           }}
+          dragActiveTodoId={dragTodoId}
           onTitleChange={setTitle}
           onCreateTodo={createTodo}
           onUndoLast={undoLast}
@@ -268,10 +305,22 @@ export default function App() {
           onSaveEditing={saveEditing}
           onCancelEditing={cancelEditing}
           onDeleteTodo={removeTodo}
-          onPendingPointerStart={(todoId) => {
-            setDragTodoId(todoId);
+          onPendingPointerStart={(todo, event) => {
+            if (event.button !== 0) return;
+            dragStartRef.current = {
+              id: todo.id,
+              title: todo.title,
+              startX: event.clientX,
+              startY: event.clientY,
+            };
           }}
-          onPendingClick={(todoId) => updateDone(todoId, today)}
+          onPendingClick={(todoId) => {
+            if (suppressClickRef.current === todoId) {
+              suppressClickRef.current = null;
+              return;
+            }
+            updateDone(todoId, today);
+          }}
         />
 
         <div
@@ -281,6 +330,7 @@ export default function App() {
         >
           <CalendarSection
             lang={lang}
+            heatColor={themes[theme].accent}
             monthCursor={monthCursor}
             selectedDay={selectedDay}
             today={today}
@@ -330,8 +380,10 @@ export default function App() {
               if (!id) return;
               updateDone(id, d);
               setSelectedDay(d);
+              dragStartRef.current = null;
               setDragTodoId(null);
               setDragOverDay(null);
+              setDragGhost(null);
             }}
             onDragOverDay={setDragOverDay}
             onDragLeaveDay={(key) => {
@@ -342,12 +394,16 @@ export default function App() {
               if (!id) return;
               updateDone(id, d);
               setSelectedDay(d);
+              dragStartRef.current = null;
               setDragTodoId(null);
               setDragOverDay(null);
+              setDragGhost(null);
             }}
             onRejectFutureDrop={() => {
+              dragStartRef.current = null;
               setDragTodoId(null);
               setDragOverDay(null);
+              setDragGhost(null);
             }}
           />
 
@@ -379,6 +435,23 @@ export default function App() {
           />
         </div>
       </div>
+      {dragGhost && (
+        <div
+          id="todo-drag-ghost"
+          data-role="drag-ghost"
+          className="pointer-events-none fixed left-0 top-0 z-50 w-[280px] rounded-2xl border bg-[var(--card)]/95 px-3 py-2 shadow-2xl backdrop-blur-sm"
+          style={{
+            borderColor: "var(--border)",
+            transform: `translate(${dragGhost.x}px, ${dragGhost.y}px) rotate(-2deg)`,
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <div className="h-2.5 w-2.5 rounded-full bg-[var(--accent)]" />
+            <p className="truncate text-sm font-medium">{dragGhost.title}</p>
+          </div>
+          <p className="mt-1 text-xs text-[var(--muted)]">{t(lang, "dragHint")}</p>
+        </div>
+      )}
     </div>
   );
 }

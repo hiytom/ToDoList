@@ -1,7 +1,7 @@
 import React from "react";
 import { AnimatePresence, motion, type AnimationControls } from "framer-motion";
-import { Check, Circle, GripVertical, Pencil, Plus, Trash2, Undo2, X } from "lucide-react";
-import { Chip, IconButton, PrimaryButton, SecondaryButton, cls } from "../ui";
+import { Check, Circle, Pencil, Plus, Trash2, Undo2, X } from "lucide-react";
+import { IconButton, PrimaryButton, SecondaryButton, cls } from "../ui";
 
 type TodoItem = {
   id: string;
@@ -28,13 +28,12 @@ type TodoSectionProps = {
     add: string;
     noPending: string;
     created: string;
-    dragHint: string;
     edit: string;
     delete: string;
     save: string;
     cancel: string;
-    dragToDate: string;
   };
+  dragActiveTodoId: string | null;
   onTitleChange: (value: string) => void;
   onCreateTodo: () => void;
   onUndoLast: () => void;
@@ -46,7 +45,7 @@ type TodoSectionProps = {
   onSaveEditing: () => void;
   onCancelEditing: () => void;
   onDeleteTodo: (todoId: string) => void;
-  onPendingPointerStart: (todoId: string) => void;
+  onPendingPointerStart: (todo: TodoItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onPendingClick: (todoId: string) => void;
 };
 
@@ -60,6 +59,7 @@ export function TodoSection({
   listRef,
   ghostHeight,
   labels,
+  dragActiveTodoId,
   onTitleChange,
   onCreateTodo,
   onUndoLast,
@@ -84,8 +84,12 @@ export function TodoSection({
     >
       <div id="todo-toolbar" data-role="container-toolbar" className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div id="todo-stats" data-role="container-group" className="flex items-center gap-2">
-          <Chip id="chip-pending" dataRole="stat-chip">{labels.pending}: {pending.length}</Chip>
-          <Chip id="chip-month-done" dataRole="stat-chip">{labels.doneMonth}: {monthDoneCount}</Chip>
+          <span id="chip-pending" data-role="stat-chip" className="inline-flex items-center rounded-full bg-[var(--card2)] px-2 py-1 text-xs text-[var(--muted)] ring-1 ring-[var(--border)]">
+            {labels.pending}: {pending.length}
+          </span>
+          <span id="chip-month-done" data-role="stat-chip" className="inline-flex items-center rounded-full bg-[var(--card2)] px-2 py-1 text-xs text-[var(--muted)] ring-1 ring-[var(--border)]">
+            {labels.doneMonth}: {monthDoneCount}
+          </span>
         </div>
         <div id="todo-actions" data-role="container-group" className="flex items-center gap-2">
           <SecondaryButton
@@ -152,10 +156,15 @@ export function TodoSection({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98 }}
                 className={cls(
-                  "mb-2 flex cursor-pointer items-center justify-between rounded-xl border px-3",
-                  "bg-[var(--card)] hover:bg-[var(--accentSoft)] transition-colors"
+                  "mb-2 flex cursor-grab items-center justify-between rounded-xl border px-3 transition-all",
+                  "bg-[var(--card)] hover:bg-[var(--accentSoft)] active:cursor-grabbing",
+                  dragActiveTodoId === todo.id && "scale-[0.985] opacity-40"
                 )}
                 style={{ borderColor: "var(--border)", minHeight: `${ghostHeight}px` }}
+                onMouseDown={(e) => {
+                  if (editingTodoId === todo.id) return;
+                  onPendingPointerStart(todo, e);
+                }}
                 onClick={() => {
                   if (editingTodoId === todo.id) return;
                   onPendingClick(todo.id);
@@ -171,6 +180,7 @@ export function TodoSection({
                           value={editingTitle}
                           onChange={(e) => onEditingTitleChange(e.target.value)}
                           onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") onSaveEditing();
                             if (e.key === "Escape") onCancelEditing();
@@ -187,6 +197,7 @@ export function TodoSection({
                               e.stopPropagation();
                               onSaveEditing();
                             }}
+                            onMouseDown={(e) => e.stopPropagation()}
                           >
                             <Check size={15} />
                           </IconButton>
@@ -197,6 +208,7 @@ export function TodoSection({
                               e.stopPropagation();
                               onCancelEditing();
                             }}
+                            onMouseDown={(e) => e.stopPropagation()}
                           >
                             <X size={15} />
                           </IconButton>
@@ -220,6 +232,7 @@ export function TodoSection({
                       e.stopPropagation();
                       onStartEditing(todo);
                     }}
+                    onMouseDown={(e) => e.stopPropagation()}
                   >
                     <Pencil size={15} />
                   </IconButton>
@@ -230,28 +243,10 @@ export function TodoSection({
                       e.stopPropagation();
                       onDeleteTodo(todo.id);
                     }}
+                    onMouseDown={(e) => e.stopPropagation()}
                   >
                     <Trash2 size={15} />
                   </IconButton>
-                  <button
-                    id={`pending-item-chip-${todo.id}`}
-                    data-role="pending-item-chip"
-                    type="button"
-                    title={labels.dragToDate}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onPendingPointerStart(todo.id);
-                    }}
-                    className="cursor-grab active:cursor-grabbing"
-                  >
-                    <Chip dataRole="pending-item-chip">
-                      <span className="inline-flex items-center gap-1">
-                        <GripVertical size={13} />
-                        {labels.dragHint}
-                      </span>
-                    </Chip>
-                  </button>
                 </div>
               </motion.div>
             ))}

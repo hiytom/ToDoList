@@ -3,6 +3,29 @@ import { Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
 import { MonthPickerModal } from "../MonthPickerModal";
 import { SecondaryButton, cls } from "../ui";
 
+function hexToRgb(hex: string) {
+  const normalized = hex.replace("#", "");
+  const expanded = normalized.length === 3
+    ? normalized.split("").map((part) => `${part}${part}`).join("")
+    : normalized;
+
+  const value = Number.parseInt(expanded, 16);
+
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  };
+}
+
+function heatLevel(doneCount: number) {
+  if (doneCount <= 0) return 0;
+  if (doneCount === 1) return 1;
+  if (doneCount <= 3) return 2;
+  if (doneCount <= 5) return 3;
+  return 4;
+}
+
 type DayTodo = {
   id: string;
   title: string;
@@ -12,6 +35,7 @@ type DayTodo = {
 
 type CalendarSectionProps = {
   lang: "en" | "zh";
+  heatColor: string;
   monthCursor: Date;
   selectedDay: Date;
   today: Date;
@@ -58,6 +82,7 @@ type CalendarSectionProps = {
 
 export function CalendarSection({
   lang,
+  heatColor,
   monthCursor,
   selectedDay,
   today,
@@ -93,6 +118,7 @@ export function CalendarSection({
   onDropDay,
   onRejectFutureDrop,
 }: CalendarSectionProps) {
+  const accentRgb = hexToRgb(heatColor);
   return (
     <section
       id="section-calendar"
@@ -144,7 +170,11 @@ export function CalendarSection({
           const isFuture = isAfterDay(d, today);
           const selected = isSameDay(d, selectedDay);
           const done = doneMap.get(key)?.length ?? 0;
+          const level = heatLevel(done);
           const isDragOver = dragOverDay === key && !!dragTodoId;
+          const heatOpacity = [0, 0.1, 0.2, 0.34, 0.5][level];
+          const heatBackground = `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, ${heatOpacity})`;
+          const heatBorder = `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, ${Math.max(0.18, heatOpacity + 0.12)})`;
           return (
             <button
               id={`calendar-day-${key}`}
@@ -189,12 +219,21 @@ export function CalendarSection({
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--card)]",
                 inMonth ? "opacity-100" : "opacity-60",
                 isToday ? "text-[var(--fg)]" : "",
-                selected ? "shadow-[0_0_0_1px_var(--accent)]" : ""
+                selected ? "shadow-[0_0_0_1px_var(--accent)]" : "",
+                level >= 3 ? "text-[var(--fg)]" : ""
               )}
               style={{
-                borderColor: isDragOver ? "var(--accent)" : "var(--border)",
+                borderColor: isDragOver ? "var(--accent)" : done ? heatBorder : "var(--border)",
                 minHeight: totalCells === 35 ? "var(--cellH5)" : "var(--cellH6)",
-                background: isDragOver ? "var(--accentSoft)" : isToday ? "var(--accentSoft)" : "var(--card2)",
+                background: isDragOver
+                  ? "var(--accentSoft)"
+                  : isToday
+                    ? done
+                      ? heatBackground
+                      : "var(--accentSoft)"
+                    : done
+                      ? heatBackground
+                      : "var(--card2)",
               } as React.CSSProperties}
             >
               <div id={`calendar-day-head-${key}`} data-role="calendar-day-head" className="flex items-center justify-between">
@@ -206,7 +245,15 @@ export function CalendarSection({
                 )}
               </div>
               {!!done && (
-                <div id={`calendar-day-done-${key}`} data-role="calendar-done-chip" className="mt-2 inline-flex items-center gap-1 rounded-md bg-[var(--card)] px-1.5 py-0.5 text-[10px] text-[var(--fg)]">
+                <div
+                  id={`calendar-day-done-${key}`}
+                  data-role="calendar-done-chip"
+                  className="mt-2 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px]"
+                  style={{
+                    background: level >= 2 ? "rgba(255,255,255,0.72)" : "var(--card)",
+                    color: "var(--fg)",
+                  }}
+                >
                   <CheckCircle2 size={11} /> {done}
                 </div>
               )}

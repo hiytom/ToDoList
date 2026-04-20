@@ -6,8 +6,17 @@ html,
 body {
   height: 100%;
   margin: 0;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 #root {
   height: 100%;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
 }
