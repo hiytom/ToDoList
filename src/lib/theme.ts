@@ -121,6 +121,8 @@ export function themeVars(theme: ThemeName, dark: boolean, compact: boolean): Th
     "--muted2": "#737373",
     "--card": "#FFFFFF",
     "--card2": "#FAFAFA",
+    "--badge": "rgba(255,255,255,0.78)",
+    "--tooltip": "#FFFFFF",
     "--border": "rgba(10, 10, 10, 0.10)",
     "--border2": "rgba(10, 10, 10, 0.14)",
   } as const;
@@ -132,6 +134,8 @@ export function themeVars(theme: ThemeName, dark: boolean, compact: boolean): Th
     "--muted2": "rgba(245,245,245,0.55)",
     "--card": "#0F1720",
     "--card2": "#0B0F14",
+    "--badge": "rgba(15,23,32,0.68)",
+    "--tooltip": "#16202B",
     "--border": "rgba(255,255,255,0.10)",
     "--border2": "rgba(255,255,255,0.14)",
   } as const;
@@ -139,25 +143,25 @@ export function themeVars(theme: ThemeName, dark: boolean, compact: boolean): Th
   const density = compact
     ? {
         "--pagePX": "20px",
-        "--pagePY": "14px",
-        "--gap": "12px",
-        "--cardP": "16px",
+        "--pagePY": "12px",
+        "--gap": "10px",
+        "--cardP": "14px",
         "--btnX": "10px",
         "--btnY": "6px",
         "--icon": "16px",
-        "--cellH5": "56px",
-        "--cellH6": "46px",
+        "--cellH5": "48px",
+        "--cellH6": "38px",
       }
     : {
-        "--pagePX": "24px",
-        "--pagePY": "16px",
-        "--gap": "16px",
-        "--cardP": "20px",
+        "--pagePX": "20px",
+        "--pagePY": "14px",
+        "--gap": "12px",
+        "--cardP": "16px",
         "--btnX": "12px",
         "--btnY": "8px",
         "--icon": "18px",
-        "--cellH5": "62px",
-        "--cellH6": "50px",
+        "--cellH5": "54px",
+        "--cellH6": "42px",
       };
 
   const base = dark ? darkSet : light;

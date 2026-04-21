@@ -31,10 +31,10 @@ async function writeStore(store) {
 
 function createWindow() {
   const window = new BrowserWindow({
-    width: 1440,
-    height: 920,
-    minWidth: 1100,
-    minHeight: 760,
+    width: 1480,
+    height: 980,
+    minWidth: 1240,
+    minHeight: 860,
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 18, y: 16 },
     backgroundColor: "#f7f7f3",
@@ -56,7 +56,7 @@ function createWindow() {
     return;
   }
 
-  window.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+  window.loadFile(path.join(app.getAppPath(), "dist", "index.html"));
 }
 
 app.whenReady().then(() => {

@@ -1,6 +1,6 @@
 import React from "react";
 import { AnimatePresence, motion, type AnimationControls } from "framer-motion";
-import { Check, Circle, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { IconButton, PrimaryButton, SecondaryButton, cls } from "../ui";
 
 type TodoItem = {
@@ -77,10 +77,10 @@ export function TodoSection({
       id="section-todo"
       data-role="container-panel"
       animate={controls}
-      className="mb-4 shrink-0 rounded-3xl border bg-[var(--card)] p-[var(--cardP)] shadow-sm"
+      className="flex h-full min-h-0 flex-col rounded-[18px] border bg-[var(--card)] p-[var(--cardP)] shadow-sm"
       style={{ borderColor: "var(--border)" }}
     >
-      <div id="todo-toolbar" data-role="container-toolbar" className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <div id="todo-toolbar" data-role="container-toolbar" className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div id="todo-stats" data-role="container-group" className="flex items-center gap-2">
           <span id="chip-pending" data-role="stat-chip" className="inline-flex items-center rounded-full bg-[var(--card2)] px-2 py-1 text-xs text-[var(--muted)] ring-1 ring-[var(--border)]">
             {labels.pending}: {pending.length}
@@ -96,18 +96,18 @@ export function TodoSection({
         </div>
       </div>
 
-      <div id="todo-split-layout" data-role="container-split-layout" className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-        <div id="todo-input-panel" data-role="container-input-panel" className="flex h-44 flex-col rounded-2xl border bg-[var(--card2)] p-3" style={{ borderColor: "var(--border)" }}>
+      <div id="todo-split-layout" data-role="container-split-layout" className="flex min-h-0 flex-1 flex-col gap-3">
+        <div id="todo-input-panel" data-role="container-input-panel" className="flex flex-col rounded-[14px] border bg-[var(--card2)] p-3" style={{ borderColor: "var(--border)" }}>
           <textarea
             id="input-todo-title"
             data-role="todo-input"
-            className="w-full flex-1 resize-none rounded-xl border bg-[var(--card)] px-3 py-2 outline-none"
+            className="min-h-[108px] w-full resize-none rounded-xl border bg-[var(--card)] px-3 py-2 outline-none"
             style={{ borderColor: "var(--border2)" }}
             value={title}
             onChange={(e) => onTitleChange(e.target.value)}
             placeholder={labels.placeholder}
           />
-          <div id="todo-input-actions" data-role="container-actions" className="mt-3 flex items-center justify-end gap-2">
+          <div id="todo-input-actions" data-role="container-actions" className="mt-2 flex items-center justify-end gap-2">
             <AnimatePresence mode="wait">
               {addFeedbackToken > 0 && (
                 <motion.div
@@ -133,7 +133,7 @@ export function TodoSection({
           id="todo-pending-list"
           data-role="container-list"
           ref={listRef}
-          className="h-44 overflow-y-auto rounded-2xl border bg-[var(--card2)] p-2"
+          className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-[14px] border bg-[var(--card2)] p-2"
           style={{ borderColor: "var(--border)" }}
         >
           <AnimatePresence initial={false}>
@@ -150,7 +150,7 @@ export function TodoSection({
               </motion.div>
             )}
 
-            {pending.map((todo) => (
+            {pending.map((todo, index) => (
               <motion.div
                 id={`pending-item-${todo.id}`}
                 data-role="pending-item"
@@ -160,7 +160,7 @@ export function TodoSection({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98 }}
                 className={cls(
-                  "mb-2 flex cursor-default items-center justify-between rounded-xl border px-3 transition-all",
+                  "group relative z-0 mb-2 flex cursor-default items-center justify-between rounded-xl border px-3 transition-all hover:z-20",
                   "bg-[var(--card)] hover:bg-[var(--accentSoft)]",
                   dragActiveTodoId === todo.id && "scale-[0.985] opacity-40"
                 )}
@@ -174,8 +174,7 @@ export function TodoSection({
                   onPendingClick(todo.id);
                 }}
               >
-                <div id={`pending-item-main-${todo.id}`} data-role="pending-item-main" className="flex min-w-0 items-center gap-2 py-2">
-                  <Circle size={16} className="shrink-0 text-[var(--muted)]" />
+                <div id={`pending-item-main-${todo.id}`} data-role="pending-item-main" className="flex min-w-0 items-center py-2">
                   <div id={`pending-item-text-${todo.id}`} data-role="pending-item-text" className="min-w-0">
                     {editingTodoId === todo.id ? (
                       <div className="flex min-w-0 flex-col gap-2">
@@ -219,15 +218,32 @@ export function TodoSection({
                         </div>
                       </div>
                     ) : (
-                      <>
-                        <p id={`pending-item-title-${todo.id}`} className="truncate text-sm">{todo.title}</p>
+                      <div className="min-w-0">
+                        <div className="min-w-0">
+                          <p id={`pending-item-title-${todo.id}`} className="truncate text-sm">{todo.title}</p>
+                        </div>
                         <p id={`pending-item-created-${todo.id}`} className="text-xs text-[var(--muted)]">
                           {labels.created}: {new Date(todo.createdAt).toLocaleString()}
                         </p>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
+                {editingTodoId !== todo.id && (
+                  <div
+                    className={cls(
+                      "pointer-events-none absolute left-0 right-0 z-30 hidden whitespace-normal break-words rounded-lg border bg-[var(--card)] px-3 py-2 text-xs text-[var(--fg)] shadow-lg group-hover:block",
+                      index === 0 ? "top-full mt-1" : "bottom-full mb-1"
+                    )}
+                    style={{
+                      borderColor: "var(--border2)",
+                      background: "var(--tooltip)",
+                      boxShadow: "0 12px 28px rgba(0, 0, 0, 0.22)",
+                    }}
+                  >
+                    {todo.title}
+                  </div>
+                )}
                 <div className="ml-3 flex shrink-0 items-center gap-1">
                   <IconButton
                     id={`btn-edit-pending-${todo.id}`}

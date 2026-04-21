@@ -123,10 +123,10 @@ export function CalendarSection({
     <section
       id="section-calendar"
       data-role="container-panel"
-      className="min-h-0 overflow-hidden rounded-3xl border bg-[var(--card)] p-[var(--cardP)] shadow-sm"
+      className="flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border bg-[var(--card)] p-[var(--cardP)] shadow-sm"
       style={{ borderColor: "var(--border)" }}
     >
-      <div id="calendar-toolbar" data-role="container-toolbar" className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <div id="calendar-toolbar" data-role="container-toolbar" className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div id="calendar-title-group" data-role="container-group" className="flex items-center gap-2 text-sm">
           <CalendarIcon size={16} />
           <span id="calendar-month-title" className="font-medium">
@@ -156,14 +156,15 @@ export function CalendarSection({
         onPickMonth={onPickMonth}
       />
 
-      <div id="calendar-week-header" data-role="calendar-week-header" className="mb-2 grid grid-cols-7 gap-2">
-        {weekday.map((w) => (
-          <div id={`calendar-weekday-${w}`} data-role="calendar-weekday" key={w} className="px-1 text-xs text-[var(--muted)]">{w}</div>
-        ))}
-      </div>
+      <div className="min-h-0 flex-1 overflow-hidden px-px">
+        <div id="calendar-week-header" data-role="calendar-week-header" className="mb-2 grid grid-cols-7 gap-2">
+          {weekday.map((w) => (
+            <div id={`calendar-weekday-${w}`} data-role="calendar-weekday" key={w} className="px-1 text-xs text-[var(--muted)]">{w}</div>
+          ))}
+        </div>
 
-      <div id="calendar-day-grid" data-role="calendar-grid" className="grid grid-cols-7 gap-2">
-        {dayCells.map((d) => {
+        <div id="calendar-day-grid" data-role="calendar-grid" className="grid grid-cols-7 gap-2">
+          {dayCells.map((d) => {
           const key = ymd(d);
           const inMonth = d.getMonth() === monthCursor.getMonth();
           const isToday = isSameDay(d, today);
@@ -175,8 +176,8 @@ export function CalendarSection({
           const heatOpacity = [0, 0.1, 0.2, 0.34, 0.5][level];
           const heatBackground = `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, ${heatOpacity})`;
           const heatBorder = `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, ${Math.max(0.18, heatOpacity + 0.12)})`;
-          return (
-            <button
+            return (
+              <button
               id={`calendar-day-${key}`}
               data-role="calendar-day-cell"
               key={key}
@@ -215,7 +216,7 @@ export function CalendarSection({
                 onDropDay(d);
               }}
               className={cls(
-                "group relative rounded-xl border p-1.5 text-left transition-colors",
+                "group relative rounded-[14px] border p-1.5 text-left transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--card)]",
                 inMonth ? "opacity-100" : "opacity-60",
                 isToday ? "text-[var(--fg)]" : "",
@@ -250,19 +251,20 @@ export function CalendarSection({
                   data-role="calendar-done-chip"
                   className="mt-2 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px]"
                   style={{
-                    background: level >= 2 ? "rgba(255,255,255,0.72)" : "var(--card)",
+                    background: level >= 2 ? "var(--badge)" : "var(--card)",
                     color: "var(--fg)",
                   }}
                 >
                   <CheckCircle2 size={11} /> {done}
                 </div>
               )}
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div id="calendar-tip" data-role="container-tip" className="mt-3 text-xs text-[var(--muted)]">
+      <div id="calendar-tip" data-role="container-tip" className="mt-2 text-xs text-[var(--muted)]">
         {labels.tipPrefix} <strong id="calendar-tip-date">{selectedDay.toLocaleDateString()}</strong>
         {lang === "en" ? labels.tipSuffixEn : labels.tipSuffixZh}
       </div>

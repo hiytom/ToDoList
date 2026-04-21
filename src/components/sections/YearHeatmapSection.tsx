@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { IconButton, cls } from "../ui";
 import { addDays, ymd } from "../../lib/date";
@@ -8,12 +8,6 @@ type DayTodo = {
   title: string;
   createdAt: number;
   doneAt?: number;
-};
-
-type HoveredCell = {
-  date: Date;
-  count: number;
-  titles: string[];
 };
 
 type YearHeatmapSectionProps = {
@@ -66,11 +60,12 @@ export function YearHeatmapSection({
   onChangeYear,
   labels,
 }: YearHeatmapSectionProps) {
-  const [hoveredCell, setHoveredCell] = useState<HoveredCell | null>(null);
   const accentRgb = useMemo(() => hexToRgb(heatColor), [heatColor]);
-  const cellSize = 12;
-  const cellGap = 4;
-  const rowLabelWidth = 48;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [availableWidth, setAvailableWidth] = useState(0);
+  const cellGap = 2;
+  const rowLabelWidth = 18;
+  const heatmapOffset = rowLabelWidth + 8;
 
   const { weeks, monthMarkers, totalDone } = useMemo(() => {
     const yearStart = new Date(year, 0, 1);
@@ -110,21 +105,44 @@ export function YearHeatmapSection({
   const legendStops = [0, 1, 2, 3, 4];
   const dayLabels = lang === "en" ? ["Sun", "Tue", "Thu"] : ["日", "二", "四"];
   const dayRows = [0, 2, 4];
-  const gridWidth = weeks.length * cellSize + Math.max(0, weeks.length - 1) * cellGap;
+  const usableWidth = useMemo(() => Math.max(320, availableWidth - heatmapOffset), [availableWidth, heatmapOffset]);
+  const cellSize = useMemo(() => {
+    if (!availableWidth) return 7;
+    return Math.max(7, (usableWidth - (weeks.length - 1) * cellGap) / weeks.length);
+  }, [availableWidth, usableWidth, weeks.length]);
+  const gridWidth = usableWidth;
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+
+    const updateWidth = () => {
+      setAvailableWidth(element.clientWidth);
+    };
+
+    updateWidth();
+
+    const observer = new ResizeObserver(() => {
+      updateWidth();
+    });
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <section
       id="section-year-heatmap"
       data-role="container-panel"
-      className="shrink-0 rounded-3xl border bg-[var(--card)] p-[var(--cardP)] shadow-sm"
+      className="flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border bg-[var(--card)] p-[var(--cardP)] shadow-sm"
       style={{ borderColor: "var(--border)" }}
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-1 flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">
+          <h2 className="text-sm font-semibold tracking-tight">
             {lang === "en" ? `${totalDone} completions in ${year}` : `${year} 年完成 ${totalDone} 项`}
           </h2>
-          <p className="mt-1 text-xs text-[var(--muted)]">{labels.yearView}</p>
+          <p className="text-[10px] text-[var(--muted)]">{labels.yearView}</p>
         </div>
         <div className="flex items-center gap-2">
           <IconButton id="btn-heatmap-prev-year" title={lang === "en" ? "Previous year" : "上一年"} onClick={() => onChangeYear(year - 1)}>
@@ -137,9 +155,12 @@ export function YearHeatmapSection({
         </div>
       </div>
 
-      <div className="overflow-x-auto pb-1">
-        <div style={{ minWidth: `${rowLabelWidth + 12 + gridWidth}px` }}>
-          <div className="relative mb-2 ml-[60px] h-5 text-xs text-[var(--muted)]">
+      <div ref={containerRef} className="min-h-0 flex-1 overflow-hidden">
+        <div className="w-full">
+          <div
+            className="relative mb-1 h-4 text-[10px] text-[var(--muted)]"
+            style={{ marginLeft: `${heatmapOffset}px`, width: `${gridWidth}px` }}
+          >
             {monthMarkers.map((marker) => (
               <div
                 key={`${marker.label}-${marker.weekIndex}`}
@@ -151,16 +172,16 @@ export function YearHeatmapSection({
             ))}
           </div>
 
-          <div className="flex gap-3">
-            <div className="grid shrink-0 grid-rows-7 items-center text-xs text-[var(--muted)]">
+          <div className="flex gap-[6px]">
+            <div className="grid shrink-0 grid-rows-7 items-center text-[10px] text-[var(--muted)]">
               {Array.from({ length: 7 }, (_, row) => (
-                <div key={row} className="flex h-3 items-center" style={{ marginBottom: row === 6 ? 0 : `${cellGap}px` }}>
+                <div key={row} className="flex items-center" style={{ height: `${cellSize}px`, marginBottom: row === 6 ? 0 : `${cellGap}px`, width: `${rowLabelWidth}px` }}>
                   {dayRows.includes(row) ? dayLabels[dayRows.indexOf(row)] : ""}
                 </div>
               ))}
             </div>
 
-            <div className="relative flex gap-1" style={{ gap: `${cellGap}px` }}>
+            <div className="relative flex" style={{ gap: `${cellGap}px`, width: `${gridWidth}px` }}>
               {weeks.map((week, weekIndex) => (
                 <div key={`heatmap-week-${weekIndex}`} className="grid grid-rows-7" style={{ gap: `${cellGap}px` }}>
                   {week.map((date) => {
@@ -181,24 +202,13 @@ export function YearHeatmapSection({
                       <button
                         key={key}
                         type="button"
-                        className={cls(
-                          "rounded-[3px] border transition-transform hover:scale-110",
-                          isCurrentYear ? "" : "pointer-events-none opacity-0",
-                          isFuture && "opacity-60"
-                        )}
+                        className={cls("rounded-[3px] border", isCurrentYear ? "" : "pointer-events-none opacity-0", isFuture && "opacity-60")}
                         style={{
                           width: `${cellSize}px`,
                           height: `${cellSize}px`,
                           borderColor: level === 0 ? "var(--border)" : `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, ${opacity + 0.08})`,
                           background,
                         }}
-                        onMouseEnter={() =>
-                          setHoveredCell({
-                            date,
-                            count,
-                            titles: todos.slice(0, 3).map((todo) => todo.title),
-                          })}
-                        onMouseLeave={() => setHoveredCell((current) => (current?.date.getTime() === date.getTime() ? null : current))}
                         onClick={() => {
                           onSelectDay(date);
                           onChangeMonthByDay(date);
@@ -209,32 +219,12 @@ export function YearHeatmapSection({
                 </div>
               ))}
 
-              {hoveredCell && (
-                <div
-                  className="pointer-events-none absolute left-0 top-full z-20 mt-3 w-[240px] rounded-xl border bg-[var(--card)] px-3 py-2 text-xs shadow-xl"
-                  style={{ borderColor: "var(--border)" }}
-                >
-                  <div className="font-medium text-[var(--fg)]">{hoveredCell.date.toLocaleDateString()}</div>
-                  <div className="mt-1 text-[var(--muted)]">
-                    {hoveredCell.count} {labels.completedCount}
-                  </div>
-                  {hoveredCell.titles.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      {hoveredCell.titles.map((title) => (
-                        <div key={title} className="truncate text-[var(--fg)]">
-                          {title}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3 text-xs text-[var(--muted)]">
+      <div className="mt-1 flex items-center justify-between gap-3 text-[10px] text-[var(--muted)]">
         <span>{lang === "en" ? "Activity intensity" : "完成强度"}</span>
         <div className="flex items-center gap-2">
           <span>{labels.less}</span>
