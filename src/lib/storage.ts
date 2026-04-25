@@ -107,8 +107,10 @@ export async function loadPersistedTodos(today: Date): Promise<Todo[]> {
     try {
       const todos = parseTodos(await desktopStorage.loadTodos());
       if (todos) return todos;
+      return [];
     } catch (error) {
       console.error("Failed to read todos from desktop storage:", error);
+      return [];
     }
   }
 
