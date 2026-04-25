@@ -134,8 +134,7 @@ export function YearHeatmapSection({
     <section
       id="section-year-heatmap"
       data-role="container-panel"
-      className="flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border bg-[var(--card)] p-[var(--cardP)] shadow-sm"
-      style={{ borderColor: "var(--border)" }}
+      className="flex h-full min-h-0 flex-col overflow-hidden bg-transparent"
     >
       <div className="mb-1 flex items-center justify-between gap-3">
         <div>

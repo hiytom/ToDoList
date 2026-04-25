@@ -48,8 +48,7 @@ export function DayDetailSection({
     <section
       id="section-day-detail"
       data-role="container-panel"
-      className="flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border bg-[var(--card)] p-[var(--cardP)] shadow-sm"
-      style={{ borderColor: "var(--border)" }}
+      className="flex h-full min-h-0 flex-col overflow-hidden bg-transparent"
     >
       <div id="day-detail-toolbar" data-role="container-toolbar" className="mb-2 flex items-center justify-between">
         <h2 id="day-detail-title" className="text-sm font-semibold">
@@ -68,7 +67,7 @@ export function DayDetailSection({
                 id={`done-item-${todo.id}`}
                 data-role="day-item"
                 key={todo.id}
-                className="flex items-center justify-between rounded-xl border bg-[var(--card2)] px-3 py-2"
+                className="flex items-center justify-between border-b px-1 py-2"
                 style={{ borderColor: "var(--border)" }}
               >
                 <div id={`done-item-main-${todo.id}`} data-role="day-item-main" className="flex min-w-0 items-center">

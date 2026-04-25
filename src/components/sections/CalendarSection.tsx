@@ -123,8 +123,7 @@ export function CalendarSection({
     <section
       id="section-calendar"
       data-role="container-panel"
-      className="flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border bg-[var(--card)] p-[var(--cardP)] shadow-sm"
-      style={{ borderColor: "var(--border)" }}
+      className="flex h-full min-h-0 flex-col overflow-hidden bg-transparent"
     >
       <div id="calendar-toolbar" data-role="container-toolbar" className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div id="calendar-title-group" data-role="container-group" className="flex items-center gap-2 text-sm">

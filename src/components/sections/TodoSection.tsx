@@ -77,8 +77,7 @@ export function TodoSection({
       id="section-todo"
       data-role="container-panel"
       animate={controls}
-      className="flex h-full min-h-0 flex-col rounded-[18px] border bg-[var(--card)] p-[var(--cardP)] shadow-sm"
-      style={{ borderColor: "var(--border)" }}
+      className="flex h-full min-h-0 flex-col bg-transparent"
     >
       <div id="todo-toolbar" data-role="container-toolbar" className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div id="todo-stats" data-role="container-group" className="flex items-center gap-2">
@@ -97,7 +96,7 @@ export function TodoSection({
       </div>
 
       <div id="todo-split-layout" data-role="container-split-layout" className="flex min-h-0 flex-1 flex-col gap-3">
-        <div id="todo-input-panel" data-role="container-input-panel" className="flex flex-col rounded-[14px] border bg-[var(--card2)] p-3" style={{ borderColor: "var(--border)" }}>
+        <div id="todo-input-panel" data-role="container-input-panel" className="flex flex-col border-b pb-3" style={{ borderColor: "var(--border)" }}>
           <textarea
             id="input-todo-title"
             data-role="todo-input"
@@ -133,8 +132,7 @@ export function TodoSection({
           id="todo-pending-list"
           data-role="container-list"
           ref={listRef}
-          className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-[14px] border bg-[var(--card2)] p-2"
-          style={{ borderColor: "var(--border)" }}
+          className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto pt-1"
         >
           <AnimatePresence initial={false}>
             {pending.length === 0 && (
