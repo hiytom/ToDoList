@@ -205,6 +205,21 @@ export default function App() {
     }
   }
 
+  async function submitTodoFromInput() {
+    const created = await createTodo();
+    if (!created) return;
+
+    const token = Date.now();
+    setAddFeedbackToken(token);
+    if (addFeedbackTimerRef.current) {
+      window.clearTimeout(addFeedbackTimerRef.current);
+    }
+    addFeedbackTimerRef.current = window.setTimeout(() => {
+      setAddFeedbackToken(0);
+      addFeedbackTimerRef.current = null;
+    }, 1200);
+  }
+
   return (
     <div
       id="app-root"
@@ -328,20 +343,16 @@ export default function App() {
                 }}
                 dragActiveTodoId={dragTodoId}
                 onTitleChange={setTitle}
+                onTitleKeyDown={(event) => {
+                  if (event.nativeEvent.isComposing) return;
+                  if (event.key !== "Enter") return;
+                  if (event.metaKey) return;
+                  event.preventDefault();
+                  void submitTodoFromInput();
+                }}
                 addFeedbackToken={addFeedbackToken}
-                onCreateTodo={async () => {
-                  const created = await createTodo();
-                  if (created) {
-                    const token = Date.now();
-                    setAddFeedbackToken(token);
-                    if (addFeedbackTimerRef.current) {
-                      window.clearTimeout(addFeedbackTimerRef.current);
-                    }
-                    addFeedbackTimerRef.current = window.setTimeout(() => {
-                      setAddFeedbackToken(0);
-                      addFeedbackTimerRef.current = null;
-                    }, 1200);
-                  }
+                onCreateTodo={() => {
+                  void submitTodoFromInput();
                 }}
                 onDemoCompleteFirst={async () => {
                   await demoCompleteFirst();

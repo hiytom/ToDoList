@@ -35,6 +35,7 @@ type TodoSectionProps = {
   };
   dragActiveTodoId: string | null;
   onTitleChange: (value: string) => void;
+  onTitleKeyDown: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   onCreateTodo: () => void;
   onDemoCompleteFirst: () => void;
   editingTodoId: string | null;
@@ -60,6 +61,7 @@ export function TodoSection({
   labels,
   dragActiveTodoId,
   onTitleChange,
+  onTitleKeyDown,
   onCreateTodo,
   onDemoCompleteFirst,
   editingTodoId,
@@ -104,6 +106,22 @@ export function TodoSection({
             style={{ borderColor: "var(--border2)" }}
             value={title}
             onChange={(e) => onTitleChange(e.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && event.metaKey) {
+                event.preventDefault();
+                const input = event.currentTarget;
+                const start = input.selectionStart ?? title.length;
+                const end = input.selectionEnd ?? title.length;
+                const nextValue = `${title.slice(0, start)}\n${title.slice(end)}`;
+                onTitleChange(nextValue);
+                requestAnimationFrame(() => {
+                  input.selectionStart = input.selectionEnd = start + 1;
+                });
+                return;
+              }
+
+              onTitleKeyDown(event);
+            }}
             placeholder={labels.placeholder}
           />
           <div id="todo-input-actions" data-role="container-actions" className="mt-2 flex items-center justify-end gap-2">
