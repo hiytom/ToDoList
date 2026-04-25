@@ -215,7 +215,7 @@ export function CalendarSection({
                 onDropDay(d);
               }}
               className={cls(
-                "group relative rounded-[14px] border p-1.5 text-left transition-colors",
+                "group relative aspect-square rounded-[14px] border p-1.5 text-left transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--card)]",
                 inMonth ? "opacity-100" : "opacity-60",
                 isToday ? "text-[var(--fg)]" : "",
@@ -224,7 +224,6 @@ export function CalendarSection({
               )}
               style={{
                 borderColor: isDragOver ? "var(--accent)" : done ? heatBorder : "var(--border)",
-                minHeight: totalCells === 35 ? "var(--cellH5)" : "var(--cellH6)",
                 background: isDragOver
                   ? "var(--accentSoft)"
                   : isToday
